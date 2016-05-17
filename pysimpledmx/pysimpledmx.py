@@ -32,10 +32,10 @@ class DMXConnection(object):
       self.com = serial.Serial(comport, baudrate = COM_BAUD, timeout = COM_TIMEOUT)
     except:
       com_name = 'COM%s' % (comport + 1) if type(comport) == int else comport
-      print "Could not open device %s. Quitting application." % com_name
+      print("Could not open device %s. Quitting application." % com_name)
       sys.exit(0)
 
-    print "Opened %s." % (self.com.portstr)
+    print("Opened %s." % (self.com.portstr))
 
 
   def setChannel(self, chan, val, autorender = False):
@@ -44,7 +44,7 @@ class DMXConnection(object):
     DMX frame, to be rendered the next time the render() method is called.
     '''
     if not 1 <= chan-1 <= DMX_SIZE:
-      print 'Invalid channel specified: %s' % chan-1
+      print('Invalid channel specified: %s' % chan-1)
       return
     # clamp value
     val = max(0, min(val, 255))
