@@ -76,8 +76,8 @@ class DMXConnection(object):
     packet += self.dmx_frame
     packet.append(END_VAL)
 
-    bytes = bytes(packet)
-    self.com.write(bytes)
+    chars = bytes(packet)
+    self.com.write(chars)
 
   def close(self):
     self.com.close()
