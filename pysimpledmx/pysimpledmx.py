@@ -66,6 +66,7 @@ class DMXConnection(object):
     ''''
     Updates the DMX output from the USB DMX Pro with the values from self.dmx_frame.
     '''
+
     packet = [
               START_VAL,
               LABELS['TX_DMX_PACKET'],
@@ -76,7 +77,7 @@ class DMXConnection(object):
     packet.append(END_VAL)
 
     packet = map(chr, packet)
-    self.com.write(''.join(packet))
+    self.com.write(b''.join(packet))
 
   def close(self):
     self.com.close()
