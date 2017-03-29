@@ -1,7 +1,7 @@
 pySimpleDMX
 ===========
 
-### c0z3n 2012, GPL v3 ###
+### c0z3n 2012, James Hannon 2016, GPL v3 ###
 
 
 pySimpleDMX is a simple python module designed to make basic DMX control in python easy.
@@ -14,7 +14,7 @@ pySimpleDMX is designed for and requires an [Enttec USB DMX Pro](http://www.entt
 # stable
 pip install pysimpledmx
 # head
-pip install git+https://github.com/c0z3n/pySimpleDMX.git
+pip install git+https://github.com/JamesHannon/pySimpleDMX.git
 ```
 
 #### Initialization ####
