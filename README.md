@@ -11,8 +11,6 @@ pySimpleDMX is designed for and requires an [Enttec USB DMX Pro](http://www.entt
 #### Installation ####
 
 ```
-# stable
-pip install pysimpledmx
 # head
 pip install git+https://github.com/JamesHannon/pySimpleDMX.git
 ```
