@@ -1,1 +1,1 @@
-from pysimpledmx import *
+from .pysimpledmx import *
