@@ -30,13 +30,13 @@ class DMXConnection(object):
     self.dmx_frame = [0] * DMX_SIZE
     try:
       self.com = serial.Serial(comport, baudrate = COM_BAUD, timeout = COM_TIMEOUT)
-    except SerialException as e:
+    except serial.SerialException as e:
       print("SerialException: {}".format(e))
-      com_name = 'COM%s' % (comport + 1) if type(comport) == int else comport
-      if not softfail:
-        print("Could not open device %s. Quitting application." % com_name)
+      if softfail:
+        raise
+      else:
         sys.exit(0)
-
+        
     print("Opened %s." % (self.com.portstr))
 
 
