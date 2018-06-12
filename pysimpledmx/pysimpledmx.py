@@ -19,7 +19,7 @@ LABELS = {
 
 
 class DMXConnection(object):
-  def __init__(self, comport = None):
+  def __init__(self, comport = None, softfail = False):
     '''
     On Windows, the only argument is the port number. On *nix, it's the path to the serial device.
     For example:
@@ -30,10 +30,12 @@ class DMXConnection(object):
     self.dmx_frame = [0] * DMX_SIZE
     try:
       self.com = serial.Serial(comport, baudrate = COM_BAUD, timeout = COM_TIMEOUT)
-    except:
+    except SerialException as e:
+      print("SerialException: {}".format(e))
       com_name = 'COM%s' % (comport + 1) if type(comport) == int else comport
-      print("Could not open device %s. Quitting application." % com_name)
-      sys.exit(0)
+      if not softfail:
+        print("Could not open device %s. Quitting application." % com_name)
+        sys.exit(0)
 
     print("Opened %s." % (self.com.portstr))
 
