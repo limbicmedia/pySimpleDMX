@@ -1,4 +1,5 @@
 import serial, sys
+import logging
 
 START_VAL   = 0x7E
 END_VAL     = 0xE7
@@ -27,17 +28,18 @@ class DMXConnection(object):
         DMXConnection('/dev/tty2')    # Linux
         DMXConnection("/dev/ttyUSB0") # Linux
     '''
+    self.logger = logging.getLogger('pySimpleDMX.DMXConnection')
     self.dmx_frame = [0] * DMX_SIZE
     try:
       self.com = serial.Serial(comport, baudrate = COM_BAUD, timeout = COM_TIMEOUT)
     except serial.SerialException as e:
-      print("SerialException: {}".format(e))
+      self.logger.error("SerialException: {}".format(e))
       if softfail:
         raise
       else:
         sys.exit(0)
-        
-    print("Opened %s." % (self.com.portstr))
+
+    self.logger.info("Opened {}.".format(self.com.portstr))
 
 
   def setChannel(self, chan, val, autorender = False):
@@ -46,7 +48,7 @@ class DMXConnection(object):
     DMX frame, to be rendered the next time the render() method is called.
     '''
     if not 0 <= chan-1 <= DMX_SIZE:
-      print("Invalid channel specified: {}".format(chan-1))
+      self.logger.warning("Invalid channel specified: {}".format(chan-1))
       return
     # clamp value
     val = max(0, min(val, 255))
