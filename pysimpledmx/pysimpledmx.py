@@ -18,6 +18,18 @@ LABELS = {
          'RX_DMX_ON_CHANGE'      :8,  #unused
       }
 
+class DMXChannelOutOfRange(Exception):
+  """
+  Exception raised for DMX Channel Out of Range
+  """
+
+  # Constructor or Initializer
+  def __init__(self, value):
+      self.value = value
+
+  # __str__ is to print() the value
+  def __str__(self):
+      return(repr(self.value))
 
 class DMXConnection(object):
   def __init__(self, comport = None, softfail = False):
@@ -47,12 +59,12 @@ class DMXConnection(object):
     Takes channel and value arguments to set a channel level in the local
     DMX frame, to be rendered the next time the render() method is called.
     '''
-    if not 0 <= chan-1 <= DMX_SIZE:
-      self.logger.warning("Invalid channel specified: {}".format(chan-1))
-      return
+    if not 1 <= chan <= DMX_SIZE:
+      raise DMXChannelOutOfRange("Invalid channel specified: {}".format(chan))
+
     # clamp value
     val = max(0, min(val, 255))
-    self.dmx_frame[chan-1] = val
+    self.dmx_frame[chan] = val
     if autorender: self.render()
 
   def clear(self, chan = 0):
@@ -63,7 +75,7 @@ class DMXConnection(object):
     if chan == 0:
       self.dmx_frame = [0] * DMX_SIZE
     else:
-      self.dmx_frame[chan-1] = 0
+      self.dmx_frame[chan] = 0
 
 
   def render(self):
