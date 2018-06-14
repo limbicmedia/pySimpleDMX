@@ -47,6 +47,11 @@ unless the `autorender` argument is specified `True`, the `.render()` method mus
 
     mydmx.setChannel(4, 255, autorender=True) # set channel 4 to full and render to the network
 
+    # asynconous ramp
+    channels = [1, 2, 3]
+    vals = [255, 0, 255]
+    mydmx.ramp(channels, vals, 10) # ramp values over 10 seconds
+
 #### Development #####
 ##### Bumping Version #####
 
