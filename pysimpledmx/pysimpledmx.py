@@ -1,5 +1,8 @@
 import serial, sys
+from time import sleep, time
+from threading import Thread, Event
 import logging
+
 
 START_VAL   = 0x7E
 END_VAL     = 0xE7
@@ -8,6 +11,7 @@ COM_BAUD    = 57600
 COM_TIMEOUT = 1
 COM_PORT    = 7
 DMX_SIZE    = 512
+DMX_MAX     = 256
 
 LABELS = {
          'GET_WIDGET_PARAMETERS' :3,  #unused
@@ -19,10 +23,9 @@ LABELS = {
       }
 
 class DMXChannelOutOfRange(Exception):
-  """
+  '''
   Exception raised for DMX Channel Out of Range
-  """
-
+  '''
   # Constructor or Initializer
   def __init__(self, value):
       self.value = value
@@ -41,6 +44,8 @@ class DMXConnection(object):
         DMXConnection("/dev/ttyUSB0") # Linux
     '''
     self.logger = logging.getLogger('pySimpleDMX.DMXConnection')
+    self.stoprequest = Event()
+    self.thread = Thread()
     self.dmx_frame = [0] * DMX_SIZE
     try:
       self.com = serial.Serial(comport, baudrate = COM_BAUD, timeout = COM_TIMEOUT)
@@ -77,6 +82,52 @@ class DMXConnection(object):
     else:
       self.dmx_frame[chan] = 0
 
+  def ramp(self, channels, vals, transitionTime):
+    '''
+    Linearly ramp list of channels to corresponding values
+    over the specific transition time.
+    '''
+    if type(channels) is not list:
+      channels = [channels]
+    if type(vals) is not list:
+      vals = [vals]
+
+    channel_vals = list(zip(channels, vals))    
+    steps = []
+    for channel, endval in channel_vals:
+        startval = self.dmx_frame[channel]
+        step = (endval -  startval) / float(DMX_MAX)
+        steps.append({"startval": startval, "step": step})
+
+    self.stoprequest.set()
+    if(self.thread.is_alive()):
+      self.thread.join()
+    else:
+      self.stoprequest.clear()
+    del(self.thread)
+    self.thread = Thread(target=self._transitionThread, name="transition", args=(channels, steps, transitionTime,))
+    self.thread.start()
+
+  def _transitionThread(self, channels, steps, transitionTime):
+    '''
+    A thread for ramping DMX values without blocking
+    '''
+    sleeptime = transitionTime / float(DMX_MAX)
+    for n in range(DMX_MAX):
+      starttime = time()
+      for i, channel in enumerate(channels):
+        nexstval = int(steps[i]["startval"] + ((n+1) * steps[i]["step"]))
+        self.setChannel(channel, nexstval)
+      self.render()
+      # account for time it took to run
+      elapsed = time() - starttime
+      if sleeptime > elapsed:
+          waittime = sleeptime - elapsed
+      else:
+          waittime = 0
+      if(self.stoprequest.wait(timeout=waittime)):
+        self.stoprequest.clear()
+        return
 
   def render(self):
     ''''
