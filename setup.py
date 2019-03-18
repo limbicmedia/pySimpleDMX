@@ -4,11 +4,11 @@ from setuptools import setup, find_packages
 
 setup(
     name="pysimpledmx",
-    version="0.1.0",
+    version=open("VERSION").read(),
     description="simple dmx control for the Enttec DMX USB Pro",
     license="GPLV3",
-    author="c0z3n",
-    url="https://github.com/c0z3n/pySimpleDMX",
+    author="c0z3n, sabjorn",
+    url="https://github.com/c0z3n/pySimpleDMX, https://github.com/limbicmedia/pySimpleDMX",
     packages=find_packages(),
     install_requires=[
         "pyserial"

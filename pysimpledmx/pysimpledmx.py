@@ -35,7 +35,7 @@ class DMXChannelOutOfRange(Exception):
       return(repr(self.value))
 
 class DMXConnection(object):
-  def __init__(self, comport = None, softfail = False):
+  def __init__(self, comport = None, softfail = False, numChannels = DMX_SIZE ):
     '''
     On Windows, the only argument is the port number. On *nix, it's the path to the serial device.
     For example:
@@ -46,7 +46,8 @@ class DMXConnection(object):
     self.logger = logging.getLogger('pySimpleDMX.DMXConnection')
     self.stoprequest = Event()
     self.thread = Thread()
-    self.dmx_frame = [0] * DMX_SIZE
+    self.numChannels = numChannels
+    self.dmx_frame = [0] * self.numChannels
     try:
       self.com = serial.Serial(comport, baudrate = COM_BAUD, timeout = COM_TIMEOUT)
     except serial.SerialException as e:
@@ -64,7 +65,7 @@ class DMXConnection(object):
     Takes channel and value arguments to set a channel level in the local
     DMX frame, to be rendered the next time the render() method is called.
     '''
-    if not 1 <= chan <= DMX_SIZE:
+    if not 1 <= chan <= self.numChannels:
       raise DMXChannelOutOfRange("Invalid channel specified: {}".format(chan))
 
     # clamp value
@@ -78,7 +79,7 @@ class DMXConnection(object):
     With optional channel argument, clears only one channel.
     '''
     if chan == 0:
-      self.dmx_frame = [0] * DMX_SIZE
+      self.dmx_frame = [0] * self.numChannels
     else:
       self.dmx_frame[chan] = 0
 
