@@ -18,7 +18,7 @@ pip install git+https://github.com/limbicmedia/pySimpleDMX.git
 or
 
 ```
-# specivic version
+# specific version
 pip install git+https://github.com/limbicmedia/pySimpleDMX.git@v0.2.0
 ```
 
