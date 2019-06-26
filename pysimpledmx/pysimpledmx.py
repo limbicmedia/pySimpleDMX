@@ -36,7 +36,7 @@ class DMXChannelOutOfRange(Exception):
       return(repr(self.value))
 
 class DMXConnection(object):
-  def __init__(self, comport = None, softfail = False, numChannels = DMX_SIZE ):
+  def __init__(self, comport = None, numChannels = DMX_SIZE ):
     '''
     On Windows, the only argument is the port number. On *nix, it's the path to the serial device.
     For example:
@@ -53,11 +53,8 @@ class DMXConnection(object):
       self.com = serial.Serial(comport, baudrate = COM_BAUD, timeout = COM_TIMEOUT, write_timeout = WRITE_TIMEOUT)
     except serial.SerialException as e:
       self.logger.error("SerialException: {}".format(e))
-      if softfail:
-        raise
-      else:
-        sys.exit(0)
-
+      raise
+    
     self.logger.info("Opened {}.".format(self.com.portstr))
 
 
