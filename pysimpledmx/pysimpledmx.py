@@ -9,6 +9,7 @@ END_VAL     = 0xE7
 
 COM_BAUD    = 57600
 COM_TIMEOUT = 1
+WRITE_TIMEOUT = 10
 COM_PORT    = 7
 DMX_SIZE    = 512
 DMX_MAX     = 256
@@ -49,7 +50,7 @@ class DMXConnection(object):
     self.numChannels = numChannels
     self.dmx_frame = [0] * self.numChannels
     try:
-      self.com = serial.Serial(comport, baudrate = COM_BAUD, timeout = COM_TIMEOUT, write_timeout=5)
+      self.com = serial.Serial(comport, baudrate = COM_BAUD, timeout = COM_TIMEOUT, write_timeout = WRITE_TIMEOUT)
     except serial.SerialException as e:
       self.logger.error("SerialException: {}".format(e))
       if softfail:
@@ -157,13 +158,9 @@ class DMXConnection(object):
 
     try:
       self.com.write(chars)
-    except:
-      if softfail:
-        raise
-      else:
-        self.logger.error("Serial failed to write to port, rebooting system...")
-        os.system('reboot')
-
+    except serial.SerialTimeoutException as e:
+      self.logger.error("Serial failed to write to port.")
+      raise
 
   def close(self):
     self.com.close()
