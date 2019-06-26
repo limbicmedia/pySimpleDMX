@@ -1,4 +1,4 @@
-import serial, sys
+import serial, sys, os
 from time import sleep, time
 from threading import Thread, Event
 import logging
@@ -49,7 +49,7 @@ class DMXConnection(object):
     self.numChannels = numChannels
     self.dmx_frame = [0] * self.numChannels
     try:
-      self.com = serial.Serial(comport, baudrate = COM_BAUD, timeout = COM_TIMEOUT)
+      self.com = serial.Serial(comport, baudrate = COM_BAUD, timeout = COM_TIMEOUT, write_timeout=5)
     except serial.SerialException as e:
       self.logger.error("SerialException: {}".format(e))
       if softfail:
@@ -88,6 +88,7 @@ class DMXConnection(object):
     Linearly ramp list of channels to corresponding values
     over the specific transition time.
     '''
+    self.logger.debug("Starting DMX ramp")
     if type(channels) is not list:
       channels = [channels]
     if type(vals) is not list:
@@ -100,8 +101,10 @@ class DMXConnection(object):
         step = (endval -  startval) / float(DMX_MAX)
         steps.append({"startval": startval, "step": step})
 
-    self.stoprequest.set()
+    self.logger.debug("Starting DMX ramp THREAD")
     if(self.thread.is_alive()):
+      self.logger.debug("THREAD is alive! Joining")
+      self.stoprequest.set()
       self.thread.join()
     else:
       self.stoprequest.clear()
@@ -113,6 +116,8 @@ class DMXConnection(object):
     '''
     A thread for ramping DMX values without blocking
     '''
+    self.logger.debug("Entering DMX ramp THREAD")
+    
     sleeptime = transitionTime / float(DMX_MAX)
     for n in range(DMX_MAX):
       starttime = time()
@@ -125,10 +130,14 @@ class DMXConnection(object):
       if sleeptime > elapsed:
           waittime = sleeptime - elapsed
       else:
-          waittime = 0
+          waittime = None
+
+      self.logger.debug("Thread event waittime: {0}".format(waittime))
       if(self.stoprequest.wait(timeout=waittime)):
+        self.logger.debug("STOP REQUESTED")
         self.stoprequest.clear()
-        return
+        break
+    self.logger.debug("EXITING THREAD!")
 
   def render(self):
     ''''
@@ -145,7 +154,16 @@ class DMXConnection(object):
     packet.append(END_VAL)
 
     chars = bytes(packet)
-    self.com.write(chars)
+
+    try:
+      self.com.write(chars)
+    except:
+      if softfail:
+        raise
+      else:
+        self.logger.error("Serial failed to write to port, rebooting system...")
+        os.system('reboot')
+
 
   def close(self):
     self.com.close()
