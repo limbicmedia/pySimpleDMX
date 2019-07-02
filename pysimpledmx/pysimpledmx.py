@@ -1,4 +1,4 @@
-import serial, sys
+import serial, sys, os
 from time import sleep, time
 from threading import Thread, Event
 import logging
@@ -9,6 +9,7 @@ END_VAL     = 0xE7
 
 COM_BAUD    = 57600
 COM_TIMEOUT = 1
+COM_WRITE_TIMEOUT = 1
 COM_PORT    = 7
 DMX_SIZE    = 512
 DMX_MAX     = 256
@@ -35,7 +36,7 @@ class DMXChannelOutOfRange(Exception):
       return(repr(self.value))
 
 class DMXConnection(object):
-  def __init__(self, comport = None, softfail = False, numChannels = DMX_SIZE ):
+  def __init__(self, comport = None, softfail = False, numChannels = DMX_SIZE, rebootIfComFailure = True):
     '''
     On Windows, the only argument is the port number. On *nix, it's the path to the serial device.
     For example:
@@ -48,8 +49,9 @@ class DMXConnection(object):
     self.thread = Thread()
     self.numChannels = numChannels
     self.dmx_frame = [0] * self.numChannels
+    self.rebootIfComFailure = rebootIfComFailure
     try:
-      self.com = serial.Serial(comport, baudrate = COM_BAUD, timeout = COM_TIMEOUT)
+      self.com = serial.Serial(comport, baudrate = COM_BAUD, timeout = COM_TIMEOUT, write_timeout = COM_WRITE_TIMEOUT)
     except serial.SerialException as e:
       self.logger.error("SerialException: {}".format(e))
       if softfail:
@@ -145,7 +147,20 @@ class DMXConnection(object):
     packet.append(END_VAL)
 
     chars = bytes(packet)
-    self.com.write(chars)
+
+    try:
+      self.com.write(chars)
+    except serial.SerialTimeoutException as e:
+      if(self.rebootIfComFailure):
+        logging.error("Unable to communicate with USB-DMX device, rebooting system")
+        # reset USB power, likely only works on RPI3B+
+        os.system("echo '1-1' |sudo tee /sys/bus/usb/drivers/usb/unbind")
+        sleep(5)
+        os.system("echo '1-1' |sudo tee /sys/bus/usb/drivers/usb/bind")
+        os.system('reboot')
+      else:
+        raise
+
 
   def close(self):
     self.com.close()
